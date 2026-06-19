@@ -1,0 +1,12 @@
+﻿namespace Cleaning_Hup.Models
+{
+    public class Customer
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string? Phone { get; set; }
+        public decimal Balance { get; set; } = 0;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public ICollection<Order> Orders { get; set; } = new List<Order>();
+    }
+}
