@@ -1,6 +1,7 @@
 using Cleaning_Hup.Abstraction;
 using Cleaning_Hup.Persistance;
 using Cleaning_Hup.Services.Classes;
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 namespace Cleaning_Hup
 {
@@ -23,6 +24,7 @@ namespace Cleaning_Hup
             builder.Services.AddScoped<ICustomerService, CustomerService>();
             builder.Services.AddScoped<IOrderService, OrderService>();
             builder.Services.AddScoped<IPaymentService, PaymentService>();
+            builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
 
             var app = builder.Build();

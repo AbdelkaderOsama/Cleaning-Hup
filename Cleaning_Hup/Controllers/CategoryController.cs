@@ -1,19 +1,22 @@
 ﻿using Cleaning_Hup.Abstraction;
 using Cleaning_Hup.Contracts.Request;
+using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Cleaning_Hup.Controllers
 {
-    [Route("api/[controller]")]
     [ApiController]
+    [Route("api/[controller]")]
     public class CategoryController : ControllerBase
     {
         private readonly ICategoryService _categoryService;
+        private readonly IValidator<CategoryRequest> _validator;
 
-        public CategoryController(ICategoryService categoryService)
+        public CategoryController(ICategoryService categoryService, IValidator<CategoryRequest> validator)
         {
             _categoryService = categoryService;
+            _validator = validator;
         }
 
         [HttpGet]
@@ -34,6 +37,10 @@ namespace Cleaning_Hup.Controllers
         [HttpPost]
         public async Task<IActionResult> Create(CategoryRequest request)
         {
+            var validationResult = await _validator.ValidateAsync(request);
+            if (!validationResult.IsValid)
+                return BadRequest(validationResult.Errors.Select(e => e.ErrorMessage));
+
             var result = await _categoryService.CreateAsync(request);
             return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
         }
@@ -41,6 +48,10 @@ namespace Cleaning_Hup.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, CategoryRequest request)
         {
+            var validationResult = await _validator.ValidateAsync(request);
+            if (!validationResult.IsValid)
+                return BadRequest(validationResult.Errors.Select(e => e.ErrorMessage));
+
             var result = await _categoryService.UpdateAsync(id, request);
             if (result == null) return NotFound();
             return Ok(result);
