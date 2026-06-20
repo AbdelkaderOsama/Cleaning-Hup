@@ -1,4 +1,5 @@
-﻿using Cleaning_Hup.Abstraction;
+﻿using AutoMapper;
+using Cleaning_Hup.Abstraction;
 using Cleaning_Hup.Contracts.Reponse;
 using Cleaning_Hup.Contracts.Request;
 using Cleaning_Hup.Models;
@@ -10,35 +11,24 @@ namespace Cleaning_Hup.Services.Classes
     public class PaymentService : IPaymentService
     {
         private readonly AppDbContext _context;
+        private readonly IMapper _mapper;
 
-        public PaymentService(AppDbContext context)
+        public PaymentService(AppDbContext context, IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;
         }
 
         public async Task<IEnumerable<PaymentResponse>> GetByOrderIdAsync(int orderId)
         {
-            return await _context.Payments
-                .Where(p => p.OrderId == orderId)
-                .Select(p => new PaymentResponse
-                {
-                    Id = p.Id,
-                    OrderId = p.OrderId,
-                    Amount = p.Amount,
-                    PaymentDate = p.PaymentDate,
-                    Notes = p.Notes
-                }).ToListAsync();
+            var payments = await _context.Payments.Where(p => p.OrderId == orderId).ToListAsync();
+            return _mapper.Map<IEnumerable<PaymentResponse>>(payments);
         }
 
         public async Task<PaymentResponse> CreateAsync(PaymentRequest request)
         {
-            var payment = new Payment
-            {
-                OrderId = request.OrderId,
-                Amount = request.Amount,
-                Notes = request.Notes
-            };
-
+            var payment = _mapper.Map<Payment>(request);
+            payment.PaymentDate = DateTime.UtcNow;
             _context.Payments.Add(payment);
 
             var order = await _context.Orders.FindAsync(request.OrderId);
@@ -50,15 +40,7 @@ namespace Cleaning_Hup.Services.Classes
             }
 
             await _context.SaveChangesAsync();
-
-            return new PaymentResponse
-            {
-                Id = payment.Id,
-                OrderId = payment.OrderId,
-                Amount = payment.Amount,
-                PaymentDate = payment.PaymentDate,
-                Notes = payment.Notes
-            };
+            return _mapper.Map<PaymentResponse>(payment);
         }
     }
 }

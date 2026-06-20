@@ -1,4 +1,5 @@
-﻿using Cleaning_Hup.Abstraction;
+﻿using AutoMapper;
+using Cleaning_Hup.Abstraction;
 using Cleaning_Hup.Contracts.Reponse;
 using Cleaning_Hup.Contracts.Request;
 using Cleaning_Hup.Models;
@@ -10,40 +11,34 @@ namespace Cleaning_Hup.Services.Classes
     public class CategoryService : ICategoryService
     {
         private readonly AppDbContext _context;
+        private readonly IMapper _mapper;
 
-        public CategoryService(AppDbContext context)
+        public CategoryService(AppDbContext context, IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;
         }
 
         public async Task<IEnumerable<CategoryResponse>> GetAllAsync()
         {
-            return await _context.Categories
-                .Select(c => new CategoryResponse
-                {
-                    Id = c.Id,
-                    Name = c.Name,
-                    CreatedAt = c.CreateAt
-                }).ToListAsync();
+            var categories = await _context.Categories.ToListAsync();
+            return _mapper.Map<IEnumerable<CategoryResponse>>(categories);
         }
 
         public async Task<CategoryResponse?> GetByIdAsync(int id)
         {
             var category = await _context.Categories.FindAsync(id);
             if (category == null) return null;
-            return new CategoryResponse { Id = category.Id, Name = category.Name, CreatedAt = category.CreateAt };
+            return _mapper.Map<CategoryResponse>(category);
         }
 
         public async Task<CategoryResponse> CreateAsync(CategoryRequest request)
         {
-            var category = new Category
-            {
-                Name = request.Name,
-                CreateAt = DateTime.UtcNow  // أضف السطر ده
-            };
+            var category = _mapper.Map<Category>(request);
+            category.CreateAt = DateTime.UtcNow;
             _context.Categories.Add(category);
             await _context.SaveChangesAsync();
-            return new CategoryResponse { Id = category.Id, Name = category.Name, CreatedAt = category.CreateAt };
+            return _mapper.Map<CategoryResponse>(category);
         }
 
         public async Task<CategoryResponse?> UpdateAsync(int id, CategoryRequest request)
@@ -52,7 +47,7 @@ namespace Cleaning_Hup.Services.Classes
             if (category == null) return null;
             category.Name = request.Name;
             await _context.SaveChangesAsync();
-            return new CategoryResponse { Id = category.Id, Name = category.Name, CreatedAt = category.CreateAt };
+            return _mapper.Map<CategoryResponse>(category);
         }
 
         public async Task<bool> DeleteAsync(int id)
@@ -65,5 +60,4 @@ namespace Cleaning_Hup.Services.Classes
         }
     }
 }
-
 

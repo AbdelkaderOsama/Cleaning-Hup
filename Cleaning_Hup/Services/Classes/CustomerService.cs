@@ -1,4 +1,5 @@
-﻿using Cleaning_Hup.Abstraction;
+﻿using AutoMapper;
+using Cleaning_Hup.Abstraction;
 using Cleaning_Hup.Contracts.Reponse;
 using Cleaning_Hup.Contracts.Request;
 using Cleaning_Hup.Models;
@@ -10,38 +11,34 @@ namespace Cleaning_Hup.Services.Classes
     public class CustomerService : ICustomerService
     {
         private readonly AppDbContext _context;
+        private readonly IMapper _mapper;
 
-        public CustomerService(AppDbContext context)
+        public CustomerService(AppDbContext context, IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;
         }
 
         public async Task<IEnumerable<CustomerResponse>> GetAllAsync()
         {
-            return await _context.Customers
-                .Select(c => new CustomerResponse
-                {
-                    Id = c.Id,
-                    Name = c.Name,
-                    Phone = c.Phone,
-                    Balance = c.Balance,
-                    CreatedAt = c.CreatedAt
-                }).ToListAsync();
+            var customers = await _context.Customers.ToListAsync();
+            return _mapper.Map<IEnumerable<CustomerResponse>>(customers);
         }
 
         public async Task<CustomerResponse?> GetByIdAsync(int id)
         {
             var customer = await _context.Customers.FindAsync(id);
             if (customer == null) return null;
-            return new CustomerResponse { Id = customer.Id, Name = customer.Name, Phone = customer.Phone, Balance = customer.Balance, CreatedAt = customer.CreatedAt };
+            return _mapper.Map<CustomerResponse>(customer);
         }
 
         public async Task<CustomerResponse> CreateAsync(CustomerRequest request)
         {
-            var customer = new Customer { Name = request.Name, Phone = request.Phone };
+            var customer = _mapper.Map<Customer>(request);
+            customer.CreatedAt = DateTime.UtcNow;
             _context.Customers.Add(customer);
             await _context.SaveChangesAsync();
-            return new CustomerResponse { Id = customer.Id, Name = customer.Name, Phone = customer.Phone, Balance = customer.Balance, CreatedAt = customer.CreatedAt };
+            return _mapper.Map<CustomerResponse>(customer);
         }
 
         public async Task<CustomerResponse?> UpdateAsync(int id, CustomerRequest request)
@@ -51,7 +48,7 @@ namespace Cleaning_Hup.Services.Classes
             customer.Name = request.Name;
             customer.Phone = request.Phone;
             await _context.SaveChangesAsync();
-            return new CustomerResponse { Id = customer.Id, Name = customer.Name, Phone = customer.Phone, Balance = customer.Balance, CreatedAt = customer.CreatedAt };
+            return _mapper.Map<CustomerResponse>(customer);
         }
 
         public async Task<bool> DeleteAsync(int id)
@@ -63,7 +60,7 @@ namespace Cleaning_Hup.Services.Classes
             return true;
         }
 
-        
+
     }
 }
 

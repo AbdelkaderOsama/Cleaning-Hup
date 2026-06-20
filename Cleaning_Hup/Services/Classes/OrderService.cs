@@ -1,4 +1,5 @@
-﻿using Cleaning_Hup.Abstraction;
+﻿using AutoMapper;
+using Cleaning_Hup.Abstraction;
 using Cleaning_Hup.Contracts.Reponse;
 using Cleaning_Hup.Contracts.Request;
 using Cleaning_Hup.Models;
@@ -12,36 +13,22 @@ namespace Cleaning_Hup.Services.Classes
 
         private readonly AppDbContext _context;
         private readonly IInventoryService _inventoryService;
+        private readonly IMapper _mapper;
 
-        public OrderService(AppDbContext context, IInventoryService inventoryService)
+        public OrderService(AppDbContext context, IInventoryService inventoryService, IMapper mapper)
         {
             _context = context;
             _inventoryService = inventoryService;
+            _mapper = mapper;
         }
 
         public async Task<IEnumerable<OrderResponse>> GetAllAsync()
         {
-            return await _context.Orders
+            var orders = await _context.Orders
                 .Include(o => o.Customer)
                 .Include(o => o.OrderItems).ThenInclude(oi => oi.Product)
-                .Select(o => new OrderResponse
-                {
-                    Id = o.Id,
-                    CustomerName = o.Customer.Name,
-                    OrderDate = o.OrderDate,
-                    Status = o.Status,
-                    TotalAmount = o.TotalAmount,
-                    PaidAmount = o.PaidAmount,
-                    RemainingAmount = o.TotalAmount - o.PaidAmount,
-                    Items = o.OrderItems.Select(oi => new OrderItemResponse
-                    {
-                        ProductId = oi.ProductId,
-                        ProductName = oi.Product.Name,
-                        Quantity = oi.Quantity,
-                        UnitPrice = oi.UnitPrice,
-                        Total = oi.Quantity * oi.UnitPrice
-                    }).ToList()
-                }).ToListAsync();
+                .ToListAsync();
+            return _mapper.Map<IEnumerable<OrderResponse>>(orders);
         }
 
         public async Task<OrderResponse?> GetByIdAsync(int id)
@@ -51,24 +38,7 @@ namespace Cleaning_Hup.Services.Classes
                 .Include(o => o.OrderItems).ThenInclude(oi => oi.Product)
                 .FirstOrDefaultAsync(o => o.Id == id);
             if (order == null) return null;
-            return new OrderResponse
-            {
-                Id = order.Id,
-                CustomerName = order.Customer.Name,
-                OrderDate = order.OrderDate,
-                Status = order.Status,
-                TotalAmount = order.TotalAmount,
-                PaidAmount = order.PaidAmount,
-                RemainingAmount = order.TotalAmount - order.PaidAmount,
-                Items = order.OrderItems.Select(oi => new OrderItemResponse
-                {
-                    ProductId = oi.ProductId,
-                    ProductName = oi.Product.Name,
-                    Quantity = oi.Quantity,
-                    UnitPrice = oi.UnitPrice,
-                    Total = oi.Quantity * oi.UnitPrice
-                }).ToList()
-            };
+            return _mapper.Map<OrderResponse>(order);
         }
 
         public async Task<OrderResponse> CreateAsync(OrderRequest request)
@@ -116,6 +86,5 @@ namespace Cleaning_Hup.Services.Classes
             return true;
         }
 
-        
     }
 }

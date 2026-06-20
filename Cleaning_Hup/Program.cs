@@ -3,6 +3,8 @@ using Cleaning_Hup.Persistance;
 using Cleaning_Hup.Services.Classes;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using AutoMapper;
+using Microsoft.Extensions.DependencyInjection;
 namespace Cleaning_Hup
 {
     public class Program
@@ -25,7 +27,7 @@ namespace Cleaning_Hup
             builder.Services.AddScoped<IOrderService, OrderService>();
             builder.Services.AddScoped<IPaymentService, PaymentService>();
             builder.Services.AddValidatorsFromAssemblyContaining<Program>();
-
+            builder.Services.AddAutoMapper(cfg => { }, typeof(Program));
 
             var app = builder.Build();
 
