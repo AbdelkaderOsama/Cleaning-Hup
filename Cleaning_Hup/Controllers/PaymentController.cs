@@ -1,5 +1,6 @@
 ﻿using Cleaning_Hup.Abstraction;
 using Cleaning_Hup.Contracts.Request;
+using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,10 +11,12 @@ namespace Cleaning_Hup.Controllers
     public class PaymentController : ControllerBase
     {
         private readonly IPaymentService _paymentService;
+        private readonly IValidator<PaymentRequest> _validator;
 
-        public PaymentController(IPaymentService paymentService)
+        public PaymentController(IPaymentService paymentService, IValidator<PaymentRequest> validator)
         {
             _paymentService = paymentService;
+            _validator = validator;
         }
 
         [HttpGet("order/{orderId}")]
@@ -26,6 +29,10 @@ namespace Cleaning_Hup.Controllers
         [HttpPost]
         public async Task<IActionResult> Create(PaymentRequest request)
         {
+            var validationResult = await _validator.ValidateAsync(request);
+            if (!validationResult.IsValid)
+                return BadRequest(validationResult.Errors.Select(e => e.ErrorMessage));
+
             var result = await _paymentService.CreateAsync(request);
             return Ok(result);
         }

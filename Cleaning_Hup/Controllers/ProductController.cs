@@ -1,5 +1,6 @@
 ﻿using Cleaning_Hup.Abstraction;
 using Cleaning_Hup.Contracts.Request;
+using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,10 +11,12 @@ namespace Cleaning_Hup.Controllers
     public class ProductController : ControllerBase
     {
         private readonly IProductService _productService;
+        private readonly IValidator<ProductRequest> _validator;
 
-        public ProductController(IProductService productService)
+        public ProductController(IProductService productService, IValidator<ProductRequest> validator)
         {
             _productService = productService;
+            _validator = validator;
         }
 
         [HttpGet]
@@ -34,6 +37,10 @@ namespace Cleaning_Hup.Controllers
         [HttpPost]
         public async Task<IActionResult> Create(ProductRequest request)
         {
+            var validationResult = await _validator.ValidateAsync(request);
+            if (!validationResult.IsValid)
+                return BadRequest(validationResult.Errors.Select(e => e.ErrorMessage));
+
             var result = await _productService.CreateAsync(request);
             return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
         }
@@ -41,6 +48,10 @@ namespace Cleaning_Hup.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, ProductRequest request)
         {
+            var validationResult = await _validator.ValidateAsync(request);
+            if (!validationResult.IsValid)
+                return BadRequest(validationResult.Errors.Select(e => e.ErrorMessage));
+
             var result = await _productService.UpdateAsync(id, request);
             if (result == null) return NotFound();
             return Ok(result);

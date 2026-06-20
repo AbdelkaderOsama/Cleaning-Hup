@@ -11,10 +11,12 @@ namespace Cleaning_Hup.Services.Classes
     {
 
         private readonly AppDbContext _context;
+        private readonly IInventoryService _inventoryService;
 
-        public OrderService(AppDbContext context)
+        public OrderService(AppDbContext context, IInventoryService inventoryService)
         {
             _context = context;
+            _inventoryService = inventoryService;
         }
 
         public async Task<IEnumerable<OrderResponse>> GetAllAsync()
@@ -86,6 +88,12 @@ namespace Cleaning_Hup.Services.Classes
             order.TotalAmount = order.OrderItems.Sum(i => i.Quantity * i.UnitPrice);
             _context.Orders.Add(order);
             await _context.SaveChangesAsync();
+
+            // تقليل المخزون لكل منتج في الطلب
+            foreach (var item in request.Items)
+            {
+                await _inventoryService.UpdateQuantityAsync(item.ProductId, item.Quantity, "OUT");
+            }
 
             return (await GetByIdAsync(order.Id))!;
         }

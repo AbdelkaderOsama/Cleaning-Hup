@@ -1,5 +1,6 @@
 ﻿using Cleaning_Hup.Abstraction;
 using Cleaning_Hup.Contracts.Request;
+using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,11 +11,14 @@ namespace Cleaning_Hup.Controllers
     public class InventoryController : ControllerBase
     {
         private readonly IInventoryService _inventoryService;
+        private readonly IValidator<InventoryRequest> _validator;
 
-        public InventoryController(IInventoryService inventoryService)
+        public InventoryController(IInventoryService inventoryService, IValidator<InventoryRequest> validator)
         {
             _inventoryService = inventoryService;
+            _validator = validator;
         }
+
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
@@ -22,10 +26,10 @@ namespace Cleaning_Hup.Controllers
             return Ok(result);
         }
 
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetBtId(int id)
+        [HttpGet("{productId}")]
+        public async Task<IActionResult> GetByProductId(int productId)
         {
-            var result = await _inventoryService.GetByProductIdAsync(id);
+            var result = await _inventoryService.GetByProductIdAsync(productId);
             if (result == null) return NotFound();
             return Ok(result);
         }
@@ -33,6 +37,10 @@ namespace Cleaning_Hup.Controllers
         [HttpPost("update")]
         public async Task<IActionResult> UpdateQuantity(InventoryRequest request)
         {
+            var validationResult = await _validator.ValidateAsync(request);
+            if (!validationResult.IsValid)
+                return BadRequest(validationResult.Errors.Select(e => e.ErrorMessage));
+
             await _inventoryService.UpdateQuantityAsync(request.ProductId, request.Quantity, request.TransactionType);
             return Ok();
         }
@@ -43,12 +51,6 @@ namespace Cleaning_Hup.Controllers
             var result = await _inventoryService.GetLowStockAsync();
             return Ok(result);
         }
-
-
-
-
-
-
     }
 }
 

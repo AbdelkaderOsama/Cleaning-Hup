@@ -1,5 +1,6 @@
 ﻿using Cleaning_Hup.Abstraction;
 using Cleaning_Hup.Contracts.Request;
+using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,9 +11,12 @@ namespace Cleaning_Hup.Controllers
     public class OrderController : ControllerBase
     {
         private readonly IOrderService _orderService;
-        public OrderController(IOrderService orderService)
+        private readonly IValidator<OrderRequest> _validator;
+
+        public OrderController(IOrderService orderService, IValidator<OrderRequest> validator)
         {
             _orderService = orderService;
+            _validator = validator;
         }
 
         [HttpGet]
@@ -33,6 +37,10 @@ namespace Cleaning_Hup.Controllers
         [HttpPost]
         public async Task<IActionResult> Create(OrderRequest request)
         {
+            var validationResult = await _validator.ValidateAsync(request);
+            if (!validationResult.IsValid)
+                return BadRequest(validationResult.Errors.Select(e => e.ErrorMessage));
+
             var result = await _orderService.CreateAsync(request);
             return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
         }
