@@ -3,11 +3,13 @@ using Cleaning_Hup.Abstraction;
 using Cleaning_Hup.Contracts.Request;
 using Cleaning_Hup.Services.Classes;
 using FluentValidation;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Cleaning_Hup.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class CustomerController : ControllerBase

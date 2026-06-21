@@ -1,10 +1,13 @@
+using System.Text;
+using AutoMapper;
 using Cleaning_Hup.Abstraction;
 using Cleaning_Hup.Persistance;
 using Cleaning_Hup.Services.Classes;
 using FluentValidation;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using AutoMapper;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
 namespace Cleaning_Hup
 {
     public class Program
@@ -28,8 +31,32 @@ namespace Cleaning_Hup
             builder.Services.AddScoped<IPaymentService, PaymentService>();
             builder.Services.AddValidatorsFromAssemblyContaining<Program>();
             builder.Services.AddAutoMapper(cfg => { }, typeof(Program));
+            builder.Services.AddScoped<IAuthService, AuthService>();
+
+            var jwtKey = builder.Configuration["Jwt:Key"]!;
+            builder.Services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(options =>
+            {
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = builder.Configuration["Jwt:Issuer"],
+                    ValidAudience = builder.Configuration["Jwt:Audience"],
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+                };
+            });
 
             var app = builder.Build();
+           
+
+            
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
@@ -40,11 +67,10 @@ namespace Cleaning_Hup
 
             app.UseHttpsRedirection();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
-
             app.MapControllers();
-
             app.Run();
         }
     }
