@@ -1,6 +1,7 @@
 using System.Text;
 using AutoMapper;
 using Cleaning_Hup.Abstraction;
+using Cleaning_Hup.MiddleWares;
 using Cleaning_Hup.Persistance;
 using Cleaning_Hup.Services.Classes;
 using FluentValidation;
@@ -54,9 +55,11 @@ namespace Cleaning_Hup
             });
 
             var app = builder.Build();
-           
 
-            
+            app.UseMiddleware<ExceptionHandlerMiddleware>();
+
+
+
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
