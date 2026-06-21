@@ -60,7 +60,7 @@ namespace Cleaning_Hup.Controllers
             if (result == null) return NotFound();
             return Ok(result);
         }
-
+        [Authorize(Roles = "Admin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
