@@ -33,6 +33,7 @@ namespace Cleaning_Hup
             builder.Services.AddValidatorsFromAssemblyContaining<Program>();
             builder.Services.AddAutoMapper(cfg => { }, typeof(Program));
             builder.Services.AddScoped<IAuthService, AuthService>();
+            builder.Services.AddScoped<IReportService, ReportService>();
 
             var jwtKey = builder.Configuration["Jwt:Key"]!;
             builder.Services.AddAuthentication(options =>

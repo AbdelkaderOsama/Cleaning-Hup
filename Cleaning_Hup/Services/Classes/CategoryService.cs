@@ -35,7 +35,7 @@ namespace Cleaning_Hup.Services.Classes
         public async Task<CategoryResponse> CreateAsync(CategoryRequest request)
         {
             var category = _mapper.Map<Category>(request);
-            category.CreateAt = DateTime.UtcNow;
+            category.CreateAt = DateTime.UtcNow;   // ← لازم يكون موجود السطر ده
             _context.Categories.Add(category);
             await _context.SaveChangesAsync();
             return _mapper.Map<CategoryResponse>(category);
